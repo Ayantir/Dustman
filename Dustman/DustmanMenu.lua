@@ -26,7 +26,7 @@ http://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 if not Dustman then return end
 
-local ADDON_VERSION = "7.2"
+local ADDON_VERSION = "7.3"
 local ADDON_WEBSITE = "http://www.esoui.com/downloads/info97-Dustman.html"
 
 --addon menu

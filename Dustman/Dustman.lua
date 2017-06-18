@@ -37,6 +37,7 @@ local usableIngredients = {}
 local savedVars
 local markedAsJunk = {}
 local RECIPE_LIST_INDEX_MAX_PROVISIONNER = 16
+local TUTORIAL_ACHIEVEMENT = 993
 
 local defaults = {
 	worldname = GetWorldName(),
@@ -977,6 +978,28 @@ function Dustman.ClearMarkedAsJunk()
 	markedAsJunk = {}
 end
 
+local function RegisterDustman()
+	EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_OPEN_STORE, OnOpenStore)
+	EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_OPEN_FENCE, OnOpenFence)
+	EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_RECIPE_LEARNED, OnRecipeLearned)
+	
+	EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, OnInventorySlotUpdate)
+	EVENT_MANAGER:AddFilterForEvent(ADDON_NAME, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
+	EVENT_MANAGER:AddFilterForEvent(ADDON_NAME, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
+end
+
+local function IsTutorialDone()
+	local _, _, _, _, completed = GetAchievementInfo(TUTORIAL_ACHIEVEMENT)
+	return completed
+end
+
+local function OnAchievementAwarded(_, _, _, achievementId)
+	if achievementId == TUTORIAL_ACHIEVEMENT then
+		EVENT_MANAGER:UnregisterForEvent(ADDON_NAME, EVENT_ACHIEVEMENT_AWARDED)
+		RegisterDustman()
+	end
+end
+
 local function OnLoad(eventCode, name)
 
 	if name == ADDON_NAME then
@@ -1055,13 +1078,11 @@ local function OnLoad(eventCode, name)
 		BuildUsableIngredientsList()
 		Dustman.CreateSettingsMenu(savedVars, markedAsJunk, defaults)
 		
-		EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_OPEN_STORE, OnOpenStore)
-		EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_OPEN_FENCE, OnOpenFence)
-		EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_RECIPE_LEARNED, OnRecipeLearned)
-		
-		EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, OnInventorySlotUpdate)
-		EVENT_MANAGER:AddFilterForEvent(ADDON_NAME, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
-		EVENT_MANAGER:AddFilterForEvent(ADDON_NAME, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
+		if IsTutorialDone() then
+			RegisterDustman()
+		else
+			EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_ACHIEVEMENT_AWARDED, OnAchievementAwarded)
+		end
 		
 		EVENT_MANAGER:UnregisterForEvent(ADDON_NAME, EVENT_ADD_ON_LOADED)
 		
