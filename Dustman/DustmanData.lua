@@ -351,45 +351,6 @@ local itemStyles = {
 	[ITEMSTYLE_AREA_DWEMER]				= true,  -- Dwemer
 }
 
-local achievementsTrophiesTable = {
-   [838] = true, -- Tamriel Beast Collector
-   [841] = true, -- Undead Hoarder
-   [842] = true, -- Chitin Accumulator
-   [843] = true, -- Nature Collector
-   [844] = true, -- Monstrous Component Collector
-   [846] = true, -- Dwarven Secrets Gatherer
-   [847] = true, -- Atronach Element Collector
-   [848] = true, -- Collect trophies from all types of slain Daedra.
-}
-
-local achievementsFishingTable = {
-   [489] = true, -- Cyrodiil Angler
-   [483] = true, -- Auridon Angler
-   [480] = true, -- Eastmarch Angler
-   [475] = true, -- Bangkorai Angler
-   [478] = true, -- Deshaan Angler
-   [479] = true, -- Shadowfen Angler
-   [473] = true, -- Rivenspire Angler
-   [471] = true, -- Glenumbra Angler
-   [472] = true, -- Stormhaven Angler
-   [490] = true, -- Coldharbour Angler
-   [486] = true, -- Malabal Tor Angler
-   [493] = true, -- Bleakrock Angler
-   [485] = true, -- Greenshade Angler
-   [916] = true, -- Craglorn Angler
-   [491] = true, -- Stros M'Kai Angler
-   [481] = true, -- Rift Angler
-   [487] = true, -- Reaper's March Angler
-   [477] = true, -- Stonefalls Angler
-   [484] = true, -- Grahtwood Angler
-   [474] = true, -- Alik'r Desert Angler
-   [492] = true, -- Khenarthi's Roost Angler
-	[1186] = true, -- Imperial City Angler
-	[1340] = true, -- Wrothgar Master Angler
-	[1351] = true, -- Hew's Bane Master Angler
-	[1431] = true, -- Gold Coast Master Angler
-}
-
 local whitelistedPotion = {
     ["71073"] = true, -- AvA Stam
     ["71071"] = true, -- AvA Health
@@ -400,29 +361,6 @@ local whitelistedPotion = {
 
 function Dustman.IsWhitelistedPotion(itemId)
    return whitelistedPotion[itemId] or false
-end
-
--- Ayantir : TODO: Handle Mistraductions. See "Do I Keep It for Alt" exception list.
-local function IsTrophyCollected(itemName, achievTable)
-   if itemName then
-      for achievementId in pairs(achievTable) do
-         for i=1, GetAchievementNumCriteria(achievementId) do
-            local description, numCompleted, numRequired  = GetAchievementCriterion(achievementId, i)
-            if string.lower(description) == string.lower(zo_strformat(SI_TOOLTIP_ITEM_NAME, itemName)) and numCompleted == numRequired then
-               return true
-            end
-         end
-      end
-   end
-   return false
-end
-
-function Dustman.IsTrophyCollected(itemName)
-   return IsTrophyCollected(itemName, achievementsTrophiesTable)
-end
-
-function Dustman.IsFishCollected(itemName)
-   return IsTrophyCollected(itemName, achievementsFishingTable)
 end
 
 function Dustman.IsOnIgnoreList(itemId)

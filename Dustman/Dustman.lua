@@ -1,4 +1,4 @@
---[[]
+--[[
 -------------------------------------------------------------------------------
 -- Dustman, by Ayantir
 -------------------------------------------------------------------------------
@@ -36,8 +36,10 @@ local LR = LibStub("libResearch-2")
 local usableIngredients = {}
 local savedVars
 local markedAsJunk = {}
-local RECIPE_LIST_INDEX_MAX_PROVISIONNER = 16
+
+local WAILING_PRISON_ZONE = 586
 local TUTORIAL_ACHIEVEMENT = 993
+local inventorySingleSlotUpdate
 
 local defaults = {
 	worldname = GetWorldName(),
@@ -233,6 +235,7 @@ local function MyPrint(message)
 end
 
 local function BuildUsableIngredientsList()
+	local RECIPE_LIST_INDEX_MAX_PROVISIONNER = 16
 	for recipeListIndex = 1, RECIPE_LIST_INDEX_MAX_PROVISIONNER do -- 16 provisionning, after it's housing
 		local _, numRecipes = GetRecipeListInfo(recipeListIndex)
 		for recipeIndex = 1, numRecipes do
@@ -516,7 +519,7 @@ local function HandleJunk(bagId, slotId, itemLink, sellPrice, forceDestroy, rule
 end
 
 -- Event handlers -------------------------------------------------------------
-local function OnInventorySlotUpdate(_, bagId, slotId, isNewItem)
+local function OnInventorySingleSlotUpdate(_, bagId, slotId, isNewItem)
 	
 	if IsUnderArrest() then return end -- Avoid check when a guard destroy stolen items
 	if IsItemJunk(bagId, slotId) then return end --we do not need to check junk again
@@ -529,7 +532,7 @@ local function OnInventorySlotUpdate(_, bagId, slotId, isNewItem)
 	if quality == ITEM_QUALITY_LEGENDARY then return end
 	
 	local itemLink = GetItemLink(bagId, slotId)
-	local itemType = GetItemLinkItemType(itemLink)
+	local itemType, specializedItemType = GetItemLinkItemType(itemLink)
 	local itemId = select(4, ZO_LinkHandler_ParseLink(itemLink))
 	local level = GetItemLevel(bagId, slotId)
 	
@@ -779,23 +782,22 @@ local function OnInventorySlotUpdate(_, bagId, slotId, isNewItem)
 		end
 	--provisioning recipes
 	elseif itemType == ITEMTYPE_RECIPE  and IsItemLinkRecipeKnown(itemLink) then
-		if savedVars.provisioning.recipe and GetItemLinkGrantedRecipeIndices(itemLink) <= RECIPE_LIST_INDEX_MAX_PROVISIONNER and quality <= savedVars.provisioning.recipeQuality then
+		if savedVars.provisioning.recipe and (specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD or specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD) and quality <= savedVars.provisioning.recipeQuality then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "RECIPE")
 			return
-		elseif savedVars.housingRecipe and GetItemLinkGrantedRecipeIndices(itemLink) > RECIPE_LIST_INDEX_MAX_PROVISIONNER and quality <= savedVars.provisioning.recipeQuality then
+		elseif savedVars.housingRecipe and (not (specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD or specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD)) and quality <= savedVars.provisioning.recipeQuality then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "HOUSING RECIPE")
 			return
 		end
 	--collected fish & collected trophies
 	elseif itemType == ITEMTYPE_COLLECTIBLE then
-		local itemName = GetItemName(bagId, slotId)
-
-		if Dustman.IsTrophyCollected(itemName) then
+		
+		if specializedItemType == SPECIALIZED_ITEMTYPE_COLLECTIBLE_MONSTER_TROPHY and savedVars.trophies then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "TROPHY")
 			return
-		end
+		 end
 		 
-		if Dustman.IsFishCollected(itemName) then
+		if specializedItemType == SPECIALIZED_ITEMTYPE_COLLECTIBLE_RARE_FISH and savedVars.trophy then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "FISH TROPHY")
 			return
 		 end
@@ -916,7 +918,7 @@ local function InteractWithLaunder()
 	local hasAnyToLaunder = false
 	for slotId, data in pairs(bagCache) do
 		if data.stolen then
-			local toLaunder = OnInventorySlotUpdate(nil, BAG_BACKPACK, data.slotIndex, false)
+			local toLaunder = OnInventorySingleSlotUpdate(nil, BAG_BACKPACK, data.slotIndex, false)
 			if toLaunder then
 				hasAnyToLaunder = true
 				data.toLaunder = true
@@ -970,7 +972,7 @@ end
 function Dustman.Sweep()
 	local bagSize = GetBagSize(BAG_BACKPACK)
 	for slotIndex = 0, bagSize - 1 do
-		OnInventorySlotUpdate(nil, BAG_BACKPACK, slotIndex, false)
+		OnInventorySingleSlotUpdate(nil, BAG_BACKPACK, slotIndex, false)
 	end
 end
 
@@ -978,14 +980,16 @@ function Dustman.ClearMarkedAsJunk()
 	markedAsJunk = {}
 end
 
-local function RegisterDustman()
-	EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_OPEN_STORE, OnOpenStore)
-	EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_OPEN_FENCE, OnOpenFence)
-	EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_RECIPE_LEARNED, OnRecipeLearned)
-	
-	EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, OnInventorySlotUpdate)
+local function RegisterInventorySingleSlotUpdate()
+	EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, OnInventorySingleSlotUpdate)
 	EVENT_MANAGER:AddFilterForEvent(ADDON_NAME, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_BAG_ID, BAG_BACKPACK)
 	EVENT_MANAGER:AddFilterForEvent(ADDON_NAME, EVENT_INVENTORY_SINGLE_SLOT_UPDATE, REGISTER_FILTER_INVENTORY_UPDATE_REASON, INVENTORY_UPDATE_REASON_DEFAULT)
+	inventorySingleSlotUpdate = true
+end
+
+local function UnregisterRegisterInventorySingleSlotUpdate()
+	EVENT_MANAGER:UnregisterForEvent(ADDON_NAME, EVENT_INVENTORY_SINGLE_SLOT_UPDATE)
+	inventorySingleSlotUpdate = false
 end
 
 local function IsTutorialDone()
@@ -993,10 +997,25 @@ local function IsTutorialDone()
 	return completed
 end
 
-local function OnAchievementAwarded(_, _, _, achievementId)
-	if achievementId == TUTORIAL_ACHIEVEMENT then
-		EVENT_MANAGER:UnregisterForEvent(ADDON_NAME, EVENT_ACHIEVEMENT_AWARDED)
-		RegisterDustman()
+local function IsInTutorial()
+	if SetMapToPlayerLocation() == SET_MAP_RESULT_MAP_CHANGED then
+		CALLBACK_MANAGER:FireCallbacks("OnWorldMapChanged")
+	end
+	return GetZoneId(GetCurrentMapZoneIndex()) == WAILING_PRISON_ZONE
+end
+
+local function OnPlayerActivated()
+	if inventorySingleSlotUpdate then
+		if IsInTutorial() then
+			UnregisterRegisterInventorySingleSlotUpdate()
+		end
+	else
+		if IsTutorialDone() then
+			RegisterInventorySingleSlotUpdate()
+			EVENT_MANAGER:UnregisterForEvent(ADDON_NAME, EVENT_PLAYER_ACTIVATED)
+		elseif not IsInTutorial() then
+			RegisterInventorySingleSlotUpdate()
+		end
 	end
 end
 
@@ -1078,11 +1097,11 @@ local function OnLoad(eventCode, name)
 		BuildUsableIngredientsList()
 		Dustman.CreateSettingsMenu(savedVars, markedAsJunk, defaults)
 		
-		if IsTutorialDone() then
-			RegisterDustman()
-		else
-			EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_ACHIEVEMENT_AWARDED, OnAchievementAwarded)
-		end
+		EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_OPEN_STORE, OnOpenStore)
+		EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_OPEN_FENCE, OnOpenFence)
+		EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_RECIPE_LEARNED, OnRecipeLearned)
+		
+		EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
 		
 		EVENT_MANAGER:UnregisterForEvent(ADDON_NAME, EVENT_ADD_ON_LOADED)
 		
