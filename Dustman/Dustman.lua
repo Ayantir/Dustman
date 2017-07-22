@@ -653,7 +653,7 @@ local function OnInventorySingleSlotUpdate(_, bagId, slotId, isNewItem)
 				MyPrint(zo_strformat(DUSTMAN_NOTE_NIRNHONED, GetString("SI_ITEMTRAITTYPE", trait), itemLink))
 			end
 			if isRareStyle and sv.keepRareStyle then
-				MyPrint(zo_strformat(DUSTMAN_NOTE_RARESTYLE, itemLink, GetString("SI_ITEMSTYLE", itemStyle)))
+				MyPrint(zo_strformat(DUSTMAN_NOTE_RARESTYLE, itemLink, GetItemStyleName(itemStyle)))
 			end
 			if isSet and sv.keepSetItems and not (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then
 				MyPrint(zo_strformat(DUSTMAN_NOTE_SETITEM, itemLink, setName))
@@ -781,11 +781,11 @@ local function OnInventorySingleSlotUpdate(_, bagId, slotId, isNewItem)
 			return
 		end
 	--provisioning recipes
-	elseif itemType == ITEMTYPE_RECIPE  and IsItemLinkRecipeKnown(itemLink) then
-		if savedVars.provisioning.recipe and (specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD or specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD) and quality <= savedVars.provisioning.recipeQuality then
+	elseif itemType == ITEMTYPE_RECIPE and IsItemLinkRecipeKnown(itemLink) then
+		if savedVars.provisioning.recipe and (specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD or specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_DRINK) and quality <= savedVars.provisioning.recipeQuality then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "RECIPE")
 			return
-		elseif savedVars.housingRecipe and (not (specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD or specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD)) and quality <= savedVars.provisioning.recipeQuality then
+		elseif savedVars.housingRecipe and (not (specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD or specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_DRINK)) and quality <= savedVars.provisioning.recipeQuality then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "HOUSING RECIPE")
 			return
 		end
@@ -1104,7 +1104,7 @@ local function OnLoad(eventCode, name)
 		EVENT_MANAGER:RegisterForEvent(ADDON_NAME, EVENT_PLAYER_ACTIVATED, OnPlayerActivated)
 		
 		EVENT_MANAGER:UnregisterForEvent(ADDON_NAME, EVENT_ADD_ON_LOADED)
-		
+				
 	end
 	
 end

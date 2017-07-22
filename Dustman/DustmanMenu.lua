@@ -26,7 +26,7 @@ http://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 if not Dustman then return end
 
-local ADDON_VERSION = "7.5"
+local ADDON_VERSION = "8"
 local ADDON_WEBSITE = "http://www.esoui.com/downloads/info97-Dustman.html"
 
 --addon menu
@@ -214,16 +214,18 @@ function Dustman.CreateSettingsMenu(DustSavedVars, DustMarkAsJunk, defaults)
 	end
 	
 	local styleSubmenuControls = {}
-	for styleItemIndex = 1, GetNumSmithingStyleItems() do
+	for styleItemIndex = 1, GetHighestItemStyleId() do
 		
-		local itemName, _, _, meetsUsageRequirement, itemStyle = GetSmithingStyleItemInfo(styleItemIndex)
-		local itemLink = GetSmithingStyleItemLink(styleItemIndex, LINK_STYLE_DEFAULT)
-		if meetsUsageRequirement and (Dustman.IsRareStyle(itemStyle) or Dustman.IsRareStyle(itemStyle) == false) then
+		local styleItemLink = GetItemStyleMaterialLink(styleItemIndex)
+		local itemName = GetItemLinkName(styleItemLink)
+		local _, _, meetsUsageRequirement = GetItemLinkInfo(styleItemLink)
+		
+		if meetsUsageRequirement and (Dustman.IsRareStyle(styleItemIndex) or Dustman.IsRareStyle(styleItemIndex) == false) then
 			local itemId = select(4, ZO_LinkHandler_ParseLink(itemLink))
 			table.insert(styleSubmenuControls, {
 				type = "checkbox",
-				name = zo_strformat("<<1>> (<<2>>)", GetString("SI_ITEMSTYLE", itemStyle), zo_strformat(SI_TOOLTIP_ITEM_NAME, itemName)),
-				tooltip = zo_strformat("<<1>> (<<2>>)", GetString("SI_ITEMSTYLE", itemStyle), zo_strformat(SI_TOOLTIP_ITEM_NAME, itemName)),
+				name = zo_strformat("<<1>> (<<2>>)", GetItemStyleName(styleItemIndex), zo_strformat(SI_TOOLTIP_ITEM_NAME, itemName)),
+				tooltip = zo_strformat("<<1>> (<<2>>)", GetItemStyleName(styleItemIndex), zo_strformat(SI_TOOLTIP_ITEM_NAME, itemName)),
 				getFunc = function() return DustSavedVars.styleMaterial[itemId] end,
 				setFunc = function(state) DustSavedVars.styleMaterial[itemId] = state end,
 				default = defaults.styleMaterial[itemId],

@@ -334,21 +334,21 @@ local oldIngredients = {
 }
 
 local itemStyles = {
-	[ITEMSTYLE_RACIAL_HIGH_ELF]		= false, -- The High Elves
-	[ITEMSTYLE_RACIAL_DARK_ELF]		= false, -- The Dark Elves
-	[ITEMSTYLE_RACIAL_WOOD_ELF]		= false, -- The Wood Elves
-	[ITEMSTYLE_RACIAL_NORD]				= false, -- The Nords
-	[ITEMSTYLE_RACIAL_BRETON]			= false, -- The Bretons
-	[ITEMSTYLE_RACIAL_REDGUARD]		= false, -- The Redguards
-	[ITEMSTYLE_RACIAL_KHAJIIT]			= false, -- The Khajiit
-	[ITEMSTYLE_RACIAL_ORC]				= false, -- The Orcs
-	[ITEMSTYLE_RACIAL_ARGONIAN]		= false, -- The Argonians
-	[ITEMSTYLE_RACIAL_IMPERIAL]		= false, -- Imperial Cyrods
-	[ITEMSTYLE_AREA_ANCIENT_ELF]		= true,  -- Ancient Elves
-	[ITEMSTYLE_AREA_REACH]				= true,  -- Barbaric
-	[ITEMSTYLE_ENEMY_PRIMITIVE]		= true,  -- Primal
-	[ITEMSTYLE_ENEMY_DAEDRIC]			= true,  -- Daedric
-	[ITEMSTYLE_AREA_DWEMER]				= true,  -- Dwemer
+	[1] = false, -- Bretons
+	[2] = false, -- Redguards
+	[3] = false, -- Orcs
+	[4] = false, -- Dark Elf
+	[5] = false, -- Nord
+	[6] = false, -- Argonian
+	[7] = false, -- High Elf
+	[8] = false, -- Wood Elf
+	[9] = false, -- Khajiit
+	[14] = false, -- Dwemer
+	[15] = false, -- Ancient Elf
+	[17] = false, -- Reach
+	[19] = false, -- Primitive
+	[20] = false, -- Daedric
+	[34] = false, -- Imperial
 }
 
 local whitelistedPotion = {
