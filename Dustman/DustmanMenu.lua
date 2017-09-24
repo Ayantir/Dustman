@@ -26,7 +26,7 @@ http://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 if not Dustman then return end
 
-local ADDON_VERSION = "8"
+local ADDON_VERSION = "9"
 local ADDON_WEBSITE = "http://www.esoui.com/downloads/info97-Dustman.html"
 
 --addon menu
@@ -220,8 +220,8 @@ function Dustman.CreateSettingsMenu(DustSavedVars, DustMarkAsJunk, defaults)
 		local itemName = GetItemLinkName(styleItemLink)
 		local _, _, meetsUsageRequirement = GetItemLinkInfo(styleItemLink)
 		
-		if meetsUsageRequirement and (Dustman.IsRareStyle(styleItemIndex) or Dustman.IsRareStyle(styleItemIndex) == false) then
-			local itemId = select(4, ZO_LinkHandler_ParseLink(itemLink))
+		if meetsUsageRequirement and Dustman.IsCommonStyle(styleItemIndex) then
+			local itemId = select(4, ZO_LinkHandler_ParseLink(styleItemLink))
 			table.insert(styleSubmenuControls, {
 				type = "checkbox",
 				name = zo_strformat("<<1>> (<<2>>)", GetItemStyleName(styleItemIndex), zo_strformat(SI_TOOLTIP_ITEM_NAME, itemName)),

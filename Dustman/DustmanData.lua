@@ -334,21 +334,20 @@ local oldIngredients = {
 }
 
 local itemStyles = {
-	[1] = false, -- Bretons
-	[2] = false, -- Redguards
-	[3] = false, -- Orcs
-	[4] = false, -- Dark Elf
-	[5] = false, -- Nord
-	[6] = false, -- Argonian
-	[7] = false, -- High Elf
-	[8] = false, -- Wood Elf
-	[9] = false, -- Khajiit
-	[14] = false, -- Dwemer
-	[15] = false, -- Ancient Elf
-	[17] = false, -- Reach
-	[19] = false, -- Primitive
-	[20] = false, -- Daedric
-	[34] = false, -- Imperial
+	[ITEMSTYLE_RACIAL_BRETON] = true,
+	[ITEMSTYLE_RACIAL_REDGUARD] = true,
+	[ITEMSTYLE_RACIAL_ORC] = true,
+	[ITEMSTYLE_RACIAL_DARK_ELF] = true,
+	[ITEMSTYLE_RACIAL_NORD] = true,
+	[ITEMSTYLE_RACIAL_ARGONIAN] = true,
+	[ITEMSTYLE_RACIAL_HIGH_ELF] = true,
+	[ITEMSTYLE_RACIAL_WOOD_ELF] = true,
+	[ITEMSTYLE_RACIAL_KHAJIIT] = true,
+	[ITEMSTYLE_AREA_ANCIENT_ELF] = true,
+	[ITEMSTYLE_AREA_REACH] = true,
+	[ITEMSTYLE_ENEMY_PRIMITIVE] = true,
+	[ITEMSTYLE_ENEMY_DAEDRIC] = true,
+	[ITEMSTYLE_RACIAL_IMPERIAL] = true,
 }
 
 local whitelistedPotion = {
@@ -378,7 +377,7 @@ function Dustman.IsBadDrink(itemId)
    return isBadDrink[itemId] or false
 end
 
-function Dustman.IsRareStyle(itemStyle)
+function Dustman.IsCommonStyle(itemStyle)
 	return itemStyles[itemStyle]
 end
 
