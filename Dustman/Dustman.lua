@@ -224,7 +224,7 @@ local defaults = {
 	--remember user marked junk
 	memory = false,
 	useMemoryFirst = false,
-	housingRecipe = false,
+	housingRecipes = false,
 	housingRecipesQuality = ITEM_QUALITY_NORMAL,
 }
 
@@ -642,35 +642,32 @@ local function OnInventorySingleSlotUpdate(_, bagId, slotId, isNewItem)
 		local requiredLevel = GetItemLinkRequiredLevel(itemLink)
 		local requiredChampionPoints = GetItemLinkRequiredChampionPoints(itemLink)
 		
-		local sv = savedVars.equipment
-		local svN = savedVars.notifications
-
-		if isNewItem and svN.found then
-			if isResearchable and sv.keepResearchable then
+		if isNewItem and savedVars.notifications.found then
+			if isResearchable and savedVars.equipment.keepResearchable then
 				MyPrint(zo_strformat(DUSTMAN_NOTE_RESEARCH, itemLink, GetString("SI_ITEMTRAITTYPE", trait)))
-			elseif isNirnhoned and sv.keepNirnhoned then
+			elseif isNirnhoned and savedVars.equipment.keepNirnhoned then
 				MyPrint(zo_strformat(DUSTMAN_NOTE_NIRNHONED, GetString("SI_ITEMTRAITTYPE", trait), itemLink))
 			end
-			if isRareStyle and sv.keepRareStyle then
+			if isRareStyle and savedVars.equipment.keepRareStyle then
 				MyPrint(zo_strformat(DUSTMAN_NOTE_RARESTYLE, itemLink, GetItemStyleName(itemStyle)))
 			end
-			if isSet and sv.keepSetItems and not (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then
+			if isSet and savedVars.equipment.keepSetItems and not (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then
 				MyPrint(zo_strformat(DUSTMAN_NOTE_SETITEM, itemLink, setName))
 			end
-			if isSet and sv.keepJewelsSetItems and (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then
+			if isSet and savedVars.equipment.keepJewelsSetItems and (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then
 				MyPrint(zo_strformat(DUSTMAN_NOTE_SETITEM, itemLink, setName))
 			end
 		end
 
 		--exclude researchable items
-		if isResearchable and sv.keepResearchable then return end
+		if isResearchable and savedVars.equipment.keepResearchable then return end
 		--exclude rare style items
-		if isRareStyle and sv.keepRareStyle then return end
+		if isRareStyle and savedVars.equipment.keepRareStyle then return end
 		
 		-- Exclude items with a specific trait
 		if not (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then
-			if sv.enabled and quality <= sv.equipmentQuality and (not isSet or savedVars.junkTraitSets) then
-				if not ((sv.keepLevel > 1 and requiredLevel >= sv.keepLevel) or (sv.keepLevel > 1 and requiredChampionPoints and requiredChampionPoints + 10000 >= sv.keepLevel)) then
+			if savedVars.equipment.enabled and quality <= savedVars.equipment.equipmentQuality and (not isSet or savedVars.junkTraitSets) then
+				if not ((savedVars.equipment.keepLevel > 1 and requiredLevel >= savedVars.equipment.keepLevel) or (savedVars.equipment.keepLevel > 1 and requiredChampionPoints and requiredChampionPoints + 10000 >= savedVars.equipment.keepLevel)) then
 					if savedVars.itemTraits[trait] then
 						HandleJunk(bagId, slotId, itemLink, sellPrice, false, "ITEM-TRAIT")
 						return
@@ -680,19 +677,19 @@ local function OnInventorySingleSlotUpdate(_, bagId, slotId, isNewItem)
 		end
 		
 		--exclude set armors & weapons
-		if isSet and sv.keepSetItems and not (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then return end
+		if isSet and savedVars.equipment.keepSetItems and not (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then return end
 		
 		--exclude set jewels
-		if isSet and sv.keepJewelsSetItems and (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) and quality >= sv.jewelsSetQuality then return end
+		if isSet and savedVars.equipment.keepJewelsSetItems and (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) and quality >= savedVars.equipment.jewelsSetQuality then return end
 		
 		--exclude items with Nirnhoned trait
-		if isNirnhoned and sv.keepNirnhoned then return end
+		if isNirnhoned and savedVars.equipment.keepNirnhoned then return end
 		
 		--exclude intricate items
 		if trait == ITEM_TRAIT_TYPE_ARMOR_INTRICATE or trait == ITEM_TRAIT_TYPE_WEAPON_INTRICATE then
-			if sv.keepIntricate then
+			if savedVars.equipment.keepIntricate then
 				--only if crafting skill in not maxed
-				if sv.keepIntricateIfNotMaxed then
+				if savedVars.equipment.keepIntricateIfNotMaxed then
 					local _, rank = GetSkillLineInfo(GetCraftingSkillLineIndices(craftingType))
 					if rank < 50 then return end
 				else
@@ -702,7 +699,7 @@ local function OnInventorySingleSlotUpdate(_, bagId, slotId, isNewItem)
 		end
 		
 		-- Items with non-craftable enchants
-		if sv.keepNCEnchants then
+		if savedVars.equipment.keepNCEnchants then
 			local _, enchantHeader = GetItemLinkEnchantInfo(itemLink)
 			-- Non craftable enchants have an header set to "Enchantment", other get a more detailled header (EN/FR/DE)
 			if enchantHeader ~= "" and (enchantHeader == "Enchantment" or enchantHeader == "Enchantement" or enchantHeader == "Verzauberung") then
@@ -711,55 +708,55 @@ local function OnInventorySingleSlotUpdate(_, bagId, slotId, isNewItem)
 		end
 
 		--zero value items
-		if sv.whiteZeroValue and quality == ITEM_QUALITY_NORMAL and sellPrice == 0 then
+		if savedVars.equipment.whiteZeroValue and quality == ITEM_QUALITY_NORMAL and sellPrice == 0 then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "0 GOLD")
 			return
 		end
 		
 		if ( not (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) ) then
 			--exclude items based on level/vetrank. 10000 is added to cprank
-			if ((sv.keepLevel > 1 and requiredLevel >= sv.keepLevel)
-			or (sv.keepLevel > 1 and requiredChampionPoints and requiredChampionPoints + 10000 >= sv.keepLevel))
-			and (not sv.keepLevelOrnate or sv.keepLevelOrnate and (trait ~= ITEM_TRAIT_TYPE_ARMOR_ORNATE and trait ~= ITEM_TRAIT_TYPE_WEAPON_ORNATE)) then
+			if ((savedVars.equipment.keepLevel > 1 and requiredLevel >= savedVars.equipment.keepLevel)
+			or (savedVars.equipment.keepLevel > 1 and requiredChampionPoints and requiredChampionPoints + 10000 >= savedVars.equipment.keepLevel))
+			and (not savedVars.equipment.keepLevelOrnate or savedVars.equipment.keepLevelOrnate and (trait ~= ITEM_TRAIT_TYPE_ARMOR_ORNATE and trait ~= ITEM_TRAIT_TYPE_WEAPON_ORNATE)) then
 				return
 			end
 		end
 		
 		-- notrait
-		if sv.notrait and quality <= sv.notraitQuality then
+		if savedVars.equipment.notrait and quality <= savedVars.equipment.notraitQuality then
 			if trait == ITEM_TRAIT_TYPE_NONE and (GetItemLinkArmorType(itemLink) ~= ARMORTYPE_NONE or GetItemLinkWeaponType(itemLink) ~= WEAPONTYPE_NONE) then
 				HandleJunk(bagId, slotId, itemLink, sellPrice, false, "TRAITLESS ITEM")
 				return
 			end
 		end
 		-- notrait jewels
-		if sv.notraitJewels then
+		if savedVars.equipment.notraitJewels then
 			if trait == ITEM_TRAIT_TYPE_NONE and GetItemLinkArmorType(itemLink) == ARMORTYPE_NONE and (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then
 				HandleJunk(bagId, slotId, itemLink, sellPrice, false, "TRAITLESS JEWEL")
 				return
 			end
 		end
 		--ornate weapons & armor
-		if sv.ornate and quality <= sv.ornateQuality then
+		if savedVars.equipment.ornate and quality <= savedVars.equipment.ornateQuality then
 			if trait == ITEM_TRAIT_TYPE_ARMOR_ORNATE or trait == ITEM_TRAIT_TYPE_WEAPON_ORNATE then
 				HandleJunk(bagId, slotId, itemLink, sellPrice, false, "ORNATE ITEM")
 				return
 			end
 		end
 		--ornate jewels
-		if sv.jewelsOrnate and quality <= sv.jewelsOrnateQuality then
+		if savedVars.equipment.jewelsOrnate and quality <= savedVars.equipment.jewelsOrnateQuality then
 			if trait == ITEM_TRAIT_TYPE_JEWELRY_ORNATE then
 				HandleJunk(bagId, slotId, itemLink, sellPrice, false, "ORNATE JEWEL")
 				return
 			end
 		end
 		--mark items with the selected item quality
-		if sv.enabled and quality <= sv.equipmentQuality and not (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then
+		if savedVars.equipment.enabled and quality <= savedVars.equipment.equipmentQuality and not (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "STD ITEM")
 			return
 		end		
 		--mark items with the selected item quality
-		if sv.jewelsEnabled and quality <= sv.jewelsQuality and (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then
+		if savedVars.equipment.jewelsEnabled and quality <= savedVars.equipment.jewelsQuality and (equipType == EQUIP_TYPE_NECK or equipType == EQUIP_TYPE_RING) then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "STD JEWEL")
 			return
 		end
@@ -784,7 +781,7 @@ local function OnInventorySingleSlotUpdate(_, bagId, slotId, isNewItem)
 		if savedVars.provisioning.recipe and (specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD or specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_DRINK) and quality <= savedVars.provisioning.recipeQuality then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "RECIPE")
 			return
-		elseif savedVars.housingRecipe and (not (specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD or specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_DRINK)) and quality <= savedVars.provisioning.recipeQuality then
+		elseif savedVars.housingRecipes and (not (specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_FOOD or specializedItemType == SPECIALIZED_ITEMTYPE_RECIPE_PROVISIONING_STANDARD_DRINK)) and quality <= savedVars.housingRecipesQuality then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "HOUSING RECIPE")
 			return
 		end
@@ -803,32 +800,31 @@ local function OnInventorySingleSlotUpdate(_, bagId, slotId, isNewItem)
 		 
 	--provisioning ingredients
 	elseif itemType == ITEMTYPE_INGREDIENT then
-		local sv = savedVars.provisioning
-		if Dustman.IsOldIngredient(itemId) and sv.oldIngredients then
+		if Dustman.IsOldIngredient(itemId) and savedVars.provisioning.oldIngredients then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "INGREDIENT")
 			return
 		else
 			local recipeType, ingredientType = Dustman.GetIngredientInfo(itemId)
-			if sv.all then
-				if sv.dish and recipeType == 1 then
-					if not (ingredientType == 5 and sv.excludeRareAdditives) and (not sv.fullStack or (sv.fullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
+			if savedVars.provisioning.all then
+				if savedVars.provisioning.dish and recipeType == 1 then
+					if not (ingredientType == 5 and savedVars.provisioning.excludeRareAdditives) and (not savedVars.provisioning.fullStack or (savedVars.provisioning.fullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
 						HandleJunk(bagId, slotId, itemLink, sellPrice, false, "FOOD INGR.")
 						return
 					end
-				elseif sv.drink and recipeType == 2 then
-					if not (ingredientType == 5 and sv.excludeRareAdditives) and (not sv.fullStack or (sv.fullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
+				elseif savedVars.provisioning.drink and recipeType == 2 then
+					if not (ingredientType == 5 and savedVars.provisioning.excludeRareAdditives) and (not savedVars.provisioning.fullStack or (savedVars.provisioning.fullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
 						HandleJunk(bagId, slotId, itemLink, sellPrice, false, "DRINK INGR.")
 						return
 					end
 				end
-			elseif sv.unusable and (not usableIngredients[itemId]) then
-				if sv.dish and recipeType == 1 then
-					if not (ingredientType == 5 and sv.excludeRareAdditives) and (not sv.fullStack or (sv.fullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
+			elseif savedVars.provisioning.unusable and (not usableIngredients[itemId]) then
+				if savedVars.provisioning.dish and recipeType == 1 then
+					if not (ingredientType == 5 and savedVars.provisioning.excludeRareAdditives) and (not savedVars.provisioning.fullStack or (savedVars.provisioning.fullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
 						HandleJunk(bagId, slotId, itemLink, sellPrice, false, "UN. FOOD INGR.")
 						return
 					end
-				elseif sv.drink and recipeType == 2 then
-					if not (ingredientType == 5 and sv.excludeRareAdditives) and (not sv.fullStack or (sv.fullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
+				elseif savedVars.provisioning.drink and recipeType == 2 then
+					if not (ingredientType == 5 and savedVars.provisioning.excludeRareAdditives) and (not savedVars.provisioning.fullStack or (savedVars.provisioning.fullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
 						HandleJunk(bagId, slotId, itemLink, sellPrice, false, "UN. DRINK INGR.")
 						return
 					end
@@ -853,14 +849,12 @@ local function OnInventorySingleSlotUpdate(_, bagId, slotId, isNewItem)
 			return
 		end
 	elseif (itemType == ITEMTYPE_BLACKSMITHING_BOOSTER or itemType == ITEMTYPE_CLOTHIER_BOOSTER or itemType == ITEMTYPE_WOODWORKING_BOOSTER) and quality <= savedVars.smithing.boosterQuality then 
-		local sv = savedVars.smithing
-		if sv.smithingBoosters and (not sv.boosterFullStack or (sv.boosterFullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
+		if savedVars.smithing.smithingBoosters and (not savedVars.smithing.boosterFullStack or (savedVars.smithing.boosterFullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "BOOSTER")
 			return
 		end
 	elseif itemType == ITEMTYPE_ENCHANTING_RUNE_ASPECT and quality <= savedVars.enchanting.aspectQuality then 
-		local sv = savedVars.enchanting
-		if sv.enchantingAspect and (not sv.aspectFullStack or (sv.aspectFullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
+		if savedVars.enchanting.enchantingAspect and (not savedVars.enchanting.aspectFullStack or (savedVars.enchanting.aspectFullStack and IsFullStackInBag(slotId, BAG_BANK, itemLink))) then
 			HandleJunk(bagId, slotId, itemLink, sellPrice, false, "ASPECT RUNE")
 			return
 		end
