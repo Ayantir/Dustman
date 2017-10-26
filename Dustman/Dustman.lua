@@ -36,6 +36,10 @@ local LR = LibStub("libResearch-2")
 local usableIngredients = {}
 local savedVars
 local markedAsJunk = {}
+local hoveredBagId
+local hoveredSlotId
+local dustmanJunkKeybind
+local hoveredItemCanBeJunked
 
 local WAILING_PRISON_ZONE = 586
 local TUTORIAL_ACHIEVEMENT = 993
@@ -1012,6 +1016,99 @@ local function OnPlayerActivated()
 	end
 end
 
+local function OnSlotMouseEnter(inventorySlot)
+
+	local junkableBags = {
+		[BAG_BACKPACK] = true,
+	}
+	
+	if inventorySlot and inventorySlot.dataEntry then
+		hoveredBagId = inventorySlot.dataEntry.data.bagId
+		hoveredSlotId = inventorySlot.dataEntry.data.slotIndex
+		if hoveredBagId and hoveredSlotId and junkableBags[hoveredBagId] and not IsItemJunk(hoveredBagId, hoveredSlotId) then
+			hoveredItemCanBeJunked = CanItemBeMarkedAsJunk(hoveredBagId, hoveredSlotId)
+			KEYBIND_STRIP:UpdateKeybindButtonGroup(dustmanJunkKeybind)
+		end
+	end
+
+end
+
+local function OnSlotMouseExit()
+	
+	hoveredBagId = nil
+	hoveredSlotId = nil
+	hoveredItemCanBeJunked = false
+	
+	KEYBIND_STRIP:UpdateKeybindButtonGroup(dustmanJunkKeybind)
+	
+end
+
+local function CanHoveredItemBeJunked()
+	return hoveredItemCanBeJunked
+end
+
+local function JunkHoveredItem()
+	if hoveredBagId and hoveredSlotId then
+		SetItemIsJunk(hoveredBagId, hoveredSlotId, true)
+	end
+end
+
+local function InitializeInventoryKeybind()
+
+	ZO_PreHook("ZO_InventorySlot_OnMouseEnter", OnSlotMouseEnter)
+	ZO_PreHook("ZO_InventorySlot_OnMouseExit", OnSlotMouseExit)
+
+	ZO_CreateStringId("SI_BINDING_NAME_DUSTMAN_JUNK", GetString(SI_ITEM_ACTION_MARK_AS_JUNK))
+	local layerIndex, categoryIndex, actionIndex = GetActionIndicesFromName("DUSTMAN_JUNK")
+	if layerIndex and categoryIndex and actionIndex then
+		
+		local key = GetActionBindingInfo(layerIndex, categoryIndex, actionIndex, 1)
+		
+		if key == KEY_INVALID then
+			-- Unbind it
+			if IsProtectedFunction("UnbindAllKeysFromAction") then
+				CallSecureProtected("UnbindAllKeysFromAction", layerIndex, categoryIndex, actionIndex)
+			else
+				UnbindAllKeysFromAction(layerIndex, categoryIndex, actionIndex)
+			end
+			
+			-- Set it to its default value
+			if IsProtectedFunction("BindKeyToAction") then
+				CallSecureProtected("BindKeyToAction", layerIndex, categoryIndex, actionIndex, 1, KEY_X, KEY_INVALID, KEY_INVALID, KEY_INVALID, KEY_INVALID)
+			else
+				BindKeyToAction(layerIndex, categoryIndex, actionIndex, 1, KEY_X, KEY_INVALID, KEY_INVALID, KEY_INVALID, KEY_INVALID)
+			end
+		end
+		
+	end
+	
+	dustmanJunkKeybind =
+	{
+		alignment = KEYBIND_STRIP_ALIGN_CENTER,
+		{
+			name = GetString(SI_ITEM_ACTION_MARK_AS_JUNK),
+			keybind = "DUSTMAN_JUNK", -- UI_SHORTCUT_NEGATIVE cannot be used
+			callback = JunkHoveredItem,
+			visible = CanHoveredItemBeJunked,
+		},
+	}
+	
+	local function OnStateChanged(oldState, newState)
+		if newState == SCENE_SHOWING then
+			KEYBIND_STRIP:AddKeybindButtonGroup(dustmanJunkKeybind)
+		elseif newState == SCENE_HIDDEN then
+			KEYBIND_STRIP:RemoveKeybindButtonGroup(dustmanJunkKeybind)
+		end
+	end
+	
+	INVENTORY_FRAGMENT:RegisterCallback("StateChange", OnStateChanged)
+
+end
+
+function Dustman_JunkHoveredItem()
+	JunkHoveredItem()
+end
+
 local function OnLoad(eventCode, name)
 
 	if name == ADDON_NAME then
@@ -1060,6 +1157,8 @@ local function OnLoad(eventCode, name)
 		-- Prehook is not enought because function is hardcoded in dialog, so we need to redo dialog after this action
 		-- false must be sent in order to handle non stolen items, there is no SellJunkItems calls when at fence, only at "regular" merchant.
 		ZO_PreHook("SellAllJunk", function() SellJunkItems(false) end)
+		
+		InitializeInventoryKeybind()
 		
 		ESO_Dialogs["SELL_ALL_JUNK"] =
 		{
