@@ -581,7 +581,7 @@ local function OnInventorySingleSlotUpdate(_, bagId, slotId, isNewItem)
 	equipType ~= EQUIP_TYPE_NECK and equipType ~= EQUIP_TYPE_RING and equipType ~= EQUIP_TYPE_COSTUME and equipType ~= EQUIP_TYPE_INVALID then
 		return
 	--stolen items with no other use then selling to fence
-	elseif savedVars.stolen and IsItemLinkStolen(itemLink) and itemType == ITEMTYPE_TREASURE and equipType == EQUIP_TYPE_INVALID and quality >= savedVars.stolenQuality then
+	elseif savedVars.stolen and itemType == ITEMTYPE_TREASURE and ((IsItemLinkStolen(itemLink) and quality >= savedVars.stolenQuality) or not IsItemLinkStolen(itemLink)) then
 		HandleJunk(bagId, slotId, itemLink, sellPrice, false, "FENCE")
 		return
 	--trash items
