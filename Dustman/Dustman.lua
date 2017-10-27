@@ -40,8 +40,9 @@ local hoveredBagId
 local hoveredSlotId
 local dustmanJunkKeybind
 local hoveredItemCanBeJunked
+local isItemJunk
+local descriptorName = GetString(SI_ITEM_ACTION_MARK_AS_JUNK)
 
-local WAILING_PRISON_ZONE = 586
 local TUTORIAL_ACHIEVEMENT = 993
 local inventorySingleSlotUpdate
 
@@ -994,23 +995,16 @@ local function IsTutorialDone()
 	return completed
 end
 
-local function IsInTutorial()
-	if SetMapToPlayerLocation() == SET_MAP_RESULT_MAP_CHANGED then
-		CALLBACK_MANAGER:FireCallbacks("OnWorldMapChanged")
-	end
-	return GetZoneId(GetCurrentMapZoneIndex()) == WAILING_PRISON_ZONE
-end
-
 local function OnPlayerActivated()
 	if inventorySingleSlotUpdate then
-		if IsInTutorial() then
+		if IsInTutorialZone() then
 			UnregisterRegisterInventorySingleSlotUpdate()
 		end
 	else
 		if IsTutorialDone() then
 			RegisterInventorySingleSlotUpdate()
 			EVENT_MANAGER:UnregisterForEvent(ADDON_NAME, EVENT_PLAYER_ACTIVATED)
-		elseif not IsInTutorial() then
+		elseif not IsInTutorialZone() then
 			RegisterInventorySingleSlotUpdate()
 		end
 	end
@@ -1025,8 +1019,9 @@ local function OnSlotMouseEnter(inventorySlot)
 	if inventorySlot and inventorySlot.dataEntry then
 		hoveredBagId = inventorySlot.dataEntry.data.bagId
 		hoveredSlotId = inventorySlot.dataEntry.data.slotIndex
-		if hoveredBagId and hoveredSlotId and junkableBags[hoveredBagId] and not IsItemJunk(hoveredBagId, hoveredSlotId) then
-			hoveredItemCanBeJunked = CanItemBeMarkedAsJunk(hoveredBagId, hoveredSlotId)
+		if hoveredBagId and hoveredSlotId and junkableBags[hoveredBagId] and CanItemBeMarkedAsJunk(hoveredBagId, hoveredSlotId) then
+			hoveredItemCanBeJunked = true
+			isItemJunk = IsItemJunk(hoveredBagId, hoveredSlotId)
 			KEYBIND_STRIP:UpdateKeybindButtonGroup(dustmanJunkKeybind)
 		end
 	end
@@ -1038,6 +1033,7 @@ local function OnSlotMouseExit()
 	hoveredBagId = nil
 	hoveredSlotId = nil
 	hoveredItemCanBeJunked = false
+	isItemJunk = false
 	
 	KEYBIND_STRIP:UpdateKeybindButtonGroup(dustmanJunkKeybind)
 	
@@ -1048,9 +1044,21 @@ local function CanHoveredItemBeJunked()
 end
 
 local function JunkHoveredItem()
-	if hoveredBagId and hoveredSlotId then
-		SetItemIsJunk(hoveredBagId, hoveredSlotId, true)
+	if CanHoveredItemBeJunked() then
+		SetItemIsJunk(hoveredBagId, hoveredSlotId, not isItemJunk)
 	end
+end
+
+local function UpdateAndDisplayKeybind()
+	
+	if isItemJunk then
+		descriptorName = GetString(SI_ITEM_ACTION_UNMARK_AS_JUNK)
+	else
+		descriptorName = GetString(SI_ITEM_ACTION_MARK_AS_JUNK)
+	end
+	
+	return CanHoveredItemBeJunked()
+
 end
 
 local function InitializeInventoryKeybind()
@@ -1058,38 +1066,16 @@ local function InitializeInventoryKeybind()
 	ZO_PreHook("ZO_InventorySlot_OnMouseEnter", OnSlotMouseEnter)
 	ZO_PreHook("ZO_InventorySlot_OnMouseExit", OnSlotMouseExit)
 
-	ZO_CreateStringId("SI_BINDING_NAME_DUSTMAN_JUNK", GetString(SI_ITEM_ACTION_MARK_AS_JUNK))
-	local layerIndex, categoryIndex, actionIndex = GetActionIndicesFromName("DUSTMAN_JUNK")
-	if layerIndex and categoryIndex and actionIndex then
-		
-		local key = GetActionBindingInfo(layerIndex, categoryIndex, actionIndex, 1)
-		
-		if key == KEY_INVALID then
-			-- Unbind it
-			if IsProtectedFunction("UnbindAllKeysFromAction") then
-				CallSecureProtected("UnbindAllKeysFromAction", layerIndex, categoryIndex, actionIndex)
-			else
-				UnbindAllKeysFromAction(layerIndex, categoryIndex, actionIndex)
-			end
-			
-			-- Set it to its default value
-			if IsProtectedFunction("BindKeyToAction") then
-				CallSecureProtected("BindKeyToAction", layerIndex, categoryIndex, actionIndex, 1, KEY_X, KEY_INVALID, KEY_INVALID, KEY_INVALID, KEY_INVALID)
-			else
-				BindKeyToAction(layerIndex, categoryIndex, actionIndex, 1, KEY_X, KEY_INVALID, KEY_INVALID, KEY_INVALID, KEY_INVALID)
-			end
-		end
-		
-	end
+	ZO_CreateStringId("SI_BINDING_NAME_DUSTMAN_JUNK", descriptorName)
 	
 	dustmanJunkKeybind =
 	{
 		alignment = KEYBIND_STRIP_ALIGN_CENTER,
 		{
-			name = GetString(SI_ITEM_ACTION_MARK_AS_JUNK),
+			name = function() return descriptorName end,
 			keybind = "DUSTMAN_JUNK", -- UI_SHORTCUT_NEGATIVE cannot be used
 			callback = JunkHoveredItem,
-			visible = CanHoveredItemBeJunked,
+			visible = UpdateAndDisplayKeybind,
 		},
 	}
 	
