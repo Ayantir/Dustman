@@ -26,7 +26,7 @@ http://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
 
 if not Dustman then return end
 
-local ADDON_VERSION = "9.3"
+local ADDON_VERSION = "9.4"
 local ADDON_WEBSITE = "http://www.esoui.com/downloads/info97-Dustman.html"
 
 --addon menu
@@ -1159,6 +1159,28 @@ function Dustman.CreateSettingsMenu(DustSavedVars, DustMarkAsJunk, defaults)
 					setFunc = function(state) DustSavedVars.notifications.sellDialog = state end,
 					default = defaults.notifications.sellDialog,
 				},
+			},
+		},
+		{
+			type = "submenu",
+			name = GetString(SI_PLAYER_MENU_MISC),
+			controls = {
+				{
+					type = "checkbox",
+					name = GetString(DUSTMAN_JUNKKEYBIND),
+					tooltip = GetString(DUSTMAN_JUNKKEYBIND_DESC),
+					getFunc = function() return DustSavedVars.junkKeybind end,
+					setFunc = function(state) DustSavedVars.junkKeybind = state end,
+					default = defaults.junkKeybind,
+				},
+				{
+					type = "checkbox",
+					name = GetString(DUSTMAN_DESTROYKEYBIND),
+					tooltip = GetString(DUSTMAN_DESTROYKEYBIND_DESC),
+					getFunc = function() return DustSavedVars.destroyKeybind end,
+					setFunc = function(state) DustSavedVars.destroyKeybind = state end,
+					default = defaults.destroyKeybind,
+				},
 				{
 					type = "checkbox",
 					name = GetString(DUSTMAN_DONTSELL),
@@ -1167,69 +1189,69 @@ function Dustman.CreateSettingsMenu(DustSavedVars, DustMarkAsJunk, defaults)
 					setFunc = function(state) DustSavedVars.notifications.sell = state end,
 					default = defaults.notifications.sell,
 				},
+				{
+					type = "checkbox",
+					name = GetString(DUSTMAN_REMEMBER),
+					tooltip = GetString(DUSTMAN_REMEMBER_DESC),
+					getFunc = function() return DustSavedVars.memory end,
+					setFunc = function(state) DustSavedVars.memory = state end,
+					default = defaults.memory,
+				},
+				{
+					type = "checkbox",
+					name = GetString(DUSTMAN_MEMORYFIRST),
+					tooltip = GetString(DUSTMAN_MEMORYFIRST_DESC),
+					getFunc = function() return DustSavedVars.useMemoryFirst end,
+					setFunc = function(state) DustSavedVars.useMemoryFirst = state end,
+					disabled = function() return not DustSavedVars.memory end,
+					default = defaults.useMemoryFirst,
+				},
+				{
+					type = "dropdown",
+					name = GetString(DUSTMAN_IMPORT),
+					tooltip = GetString(DUSTMAN_IMPORT_DESC),
+					choices = charactersKnown,
+					width = "full",
+					getFunc = function() return GetUnitName('player') end,
+					warning = "ReloadUI",
+					setFunc = function(choice)
+					
+						local playerId = GetCurrentCharacterId()
+						local referenceId = GetIdFromName(choice)
+						
+						if referenceId then
+							
+							for entryIndex, entryData in pairs(Dustman_SavedVariables.Default[GetDisplayName()][referenceId]) do
+								if entryIndex ~= "$LastCharacterName" then
+									DustSavedVars[entryIndex] = entryData
+									Dustman_SavedVariables.Default[GetDisplayName()][playerId][entryIndex] = entryData
+								end
+							end
+							
+							SCENE_MANAGER:ShowBaseScene()
+							CHAT_SYSTEM:AddMessage(zo_strformat(DUSTMAN_IMPORTED, choice))
+							
+							zo_callLater(function() ReloadUI() end, 2000)
+							
+						end
+					end,
+				},
+				{
+					type = "button",
+					name = GetString(DUSTMAN_SWEEP),
+					tooltip = GetString(DUSTMAN_SWEEP_DESC),
+					func = function() Dustman.Sweep() end,
+					width = "half",
+				},
+				{
+					type = "button",
+					name = GetString(DUSTMAN_CLEAR_MARKED),
+					tooltip = GetString(DUSTMAN_CLEAR_MARKED_DESC),
+					func = function() Dustman.ClearMarkedAsJunk() end,
+					width = "half",
+				},
 			},
 		},
-		{
-			type = "checkbox",
-			name = GetString(DUSTMAN_REMEMBER),
-			tooltip = GetString(DUSTMAN_REMEMBER_DESC),
-			getFunc = function() return DustSavedVars.memory end,
-			setFunc = function(state) DustSavedVars.memory = state end,
-			default = defaults.memory,
-		},
-		{
-			type = "checkbox",
-			name = GetString(DUSTMAN_MEMORYFIRST),
-			tooltip = GetString(DUSTMAN_MEMORYFIRST_DESC),
-			getFunc = function() return DustSavedVars.useMemoryFirst end,
-			setFunc = function(state) DustSavedVars.useMemoryFirst = state end,
-			disabled = function() return not DustSavedVars.memory end,
-			default = defaults.useMemoryFirst,
-		},
-		{
-			type = "dropdown",
-			name = GetString(DUSTMAN_IMPORT),
-			tooltip = GetString(DUSTMAN_IMPORT_DESC),
-			choices = charactersKnown,
-			width = "full",
-			getFunc = function() return GetUnitName('player') end,
-			warning = "ReloadUI",
-			setFunc = function(choice)
-			
-				local playerId = GetCurrentCharacterId()
-				local referenceId = GetIdFromName(choice)
-				
-				if referenceId then
-					
-					for entryIndex, entryData in pairs(Dustman_SavedVariables.Default[GetDisplayName()][referenceId]) do
-						if entryIndex ~= "$LastCharacterName" then
-							DustSavedVars[entryIndex] = entryData
-							Dustman_SavedVariables.Default[GetDisplayName()][playerId][entryIndex] = entryData
-						end
-					end
-					
-					SCENE_MANAGER:ShowBaseScene()
-					CHAT_SYSTEM:AddMessage(zo_strformat(DUSTMAN_IMPORTED, choice))
-					
-					zo_callLater(function() ReloadUI() end, 2000)
-					
-				end
-			end,
-		},
-		{
-			type = "button",
-			name = GetString(DUSTMAN_SWEEP),
-			tooltip = GetString(DUSTMAN_SWEEP_DESC),
-			func = function() Dustman.Sweep() end,
-			width = "half",
-		},
-		{
-			type = "button",
-			name = GetString(DUSTMAN_CLEAR_MARKED),
-			tooltip = GetString(DUSTMAN_CLEAR_MARKED_DESC),
-			func = function() Dustman.ClearMarkedAsJunk() end,
-			width = "half",
-		},	
 	}
 	LAM2:RegisterOptionControls("Dustman_OptionsPanel", optionsData)
 end

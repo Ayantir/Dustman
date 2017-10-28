@@ -36,10 +36,12 @@ local LR = LibStub("libResearch-2")
 local usableIngredients = {}
 local savedVars
 local markedAsJunk = {}
+
 local hoveredBagId
 local hoveredSlotId
-local dustmanJunkKeybind
+local dustmanKeybinds
 local hoveredItemCanBeJunked
+local hoveredItemCanBeDestroyed
 local isItemJunk
 local descriptorName = GetString(SI_ITEM_ACTION_MARK_AS_JUNK)
 
@@ -231,6 +233,9 @@ local defaults = {
 	useMemoryFirst = false,
 	housingRecipes = false,
 	housingRecipesQuality = ITEM_QUALITY_NORMAL,
+	junkKeybind = false,
+	destroyKeybind = false,
+	junkKeybind = false,
 }
 
 -- Local functions ------------------------------------------------------------
@@ -1019,10 +1024,13 @@ local function OnSlotMouseEnter(inventorySlot)
 	if inventorySlot and inventorySlot.dataEntry then
 		hoveredBagId = inventorySlot.dataEntry.data.bagId
 		hoveredSlotId = inventorySlot.dataEntry.data.slotIndex
-		if hoveredBagId and hoveredSlotId and junkableBags[hoveredBagId] and CanItemBeMarkedAsJunk(hoveredBagId, hoveredSlotId) then
-			hoveredItemCanBeJunked = true
-			isItemJunk = IsItemJunk(hoveredBagId, hoveredSlotId)
-			KEYBIND_STRIP:UpdateKeybindButtonGroup(dustmanJunkKeybind)
+		if hoveredBagId and hoveredSlotId and junkableBags[hoveredBagId] and not IsItemProtected(hoveredBagId, hoveredSlotId) then
+			hoveredItemCanBeDestroyed = true
+			if CanItemBeMarkedAsJunk(hoveredBagId, hoveredSlotId) then
+				hoveredItemCanBeJunked = true
+				isItemJunk = IsItemJunk(hoveredBagId, hoveredSlotId)
+			end
+			KEYBIND_STRIP:UpdateKeybindButtonGroup(dustmanKeybinds)
 		end
 	end
 
@@ -1033,14 +1041,19 @@ local function OnSlotMouseExit()
 	hoveredBagId = nil
 	hoveredSlotId = nil
 	hoveredItemCanBeJunked = false
+	hoveredItemCanBeDestroyed = false
 	isItemJunk = false
 	
-	KEYBIND_STRIP:UpdateKeybindButtonGroup(dustmanJunkKeybind)
+	KEYBIND_STRIP:UpdateKeybindButtonGroup(dustmanKeybinds)
 	
 end
 
 local function CanHoveredItemBeJunked()
-	return hoveredItemCanBeJunked
+	return savedVars.junkKeybind and hoveredItemCanBeJunked
+end
+
+local function CanHoveredItemBeDestroyed()
+	return savedVars.destroyKeybind and hoveredItemCanBeDestroyed
 end
 
 local function JunkHoveredItem()
@@ -1049,7 +1062,13 @@ local function JunkHoveredItem()
 	end
 end
 
-local function UpdateAndDisplayKeybind()
+local function DestroyHoveredItem()
+	if CanHoveredItemBeDestroyed() then
+		DestroyItem(hoveredBagId, hoveredSlotId)
+	end
+end
+
+local function UpdateAndDisplayJunkKeybind()
 	
 	if isItemJunk then
 		descriptorName = GetString(SI_ITEM_ACTION_UNMARK_AS_JUNK)
@@ -1061,29 +1080,40 @@ local function UpdateAndDisplayKeybind()
 
 end
 
+local function UpdateAndDisplayDestroyKeybind()	
+	return CanHoveredItemBeDestroyed()
+end
+
 local function InitializeInventoryKeybind()
 
 	ZO_PreHook("ZO_InventorySlot_OnMouseEnter", OnSlotMouseEnter)
 	ZO_PreHook("ZO_InventorySlot_OnMouseExit", OnSlotMouseExit)
 
 	ZO_CreateStringId("SI_BINDING_NAME_DUSTMAN_JUNK", descriptorName)
+	ZO_CreateStringId("SI_BINDING_NAME_DUSTMAN_DESTROY", GetString(SI_ITEM_ACTION_DESTROY))
 	
-	dustmanJunkKeybind =
+	dustmanKeybinds =
 	{
 		alignment = KEYBIND_STRIP_ALIGN_CENTER,
+		{
+			name = GetString(SI_ITEM_ACTION_DESTROY),
+			keybind = "DUSTMAN_DESTROY",
+			callback = DestroyHoveredItem,
+			visible = UpdateAndDisplayDestroyKeybind,
+		},
 		{
 			name = function() return descriptorName end,
 			keybind = "DUSTMAN_JUNK", -- UI_SHORTCUT_NEGATIVE cannot be used
 			callback = JunkHoveredItem,
-			visible = UpdateAndDisplayKeybind,
+			visible = UpdateAndDisplayJunkKeybind,
 		},
 	}
 	
 	local function OnStateChanged(oldState, newState)
 		if newState == SCENE_SHOWING then
-			KEYBIND_STRIP:AddKeybindButtonGroup(dustmanJunkKeybind)
+			KEYBIND_STRIP:AddKeybindButtonGroup(dustmanKeybinds)
 		elseif newState == SCENE_HIDDEN then
-			KEYBIND_STRIP:RemoveKeybindButtonGroup(dustmanJunkKeybind)
+			KEYBIND_STRIP:RemoveKeybindButtonGroup(dustmanKeybinds)
 		end
 	end
 	
@@ -1093,6 +1123,10 @@ end
 
 function Dustman_JunkHoveredItem()
 	JunkHoveredItem()
+end
+
+function Dustman_DestroyHoveredItem()
+	DestroyHoveredItem()
 end
 
 local function OnLoad(eventCode, name)

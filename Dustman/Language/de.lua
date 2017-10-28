@@ -139,6 +139,11 @@ SafeAddString(DUSTMAN_ACT_LOWTREASURES_DESC,		"Wähle die Aktion für Schätze g
 SafeAddString(DUSTMAN_ACT_LOWTREASURE1,			"keine Aktion", 1)
 SafeAddString(DUSTMAN_ACT_LOWTREASURE2,			"zerstöre Gegenstand", 1)
 SafeAddString(DUSTMAN_ACT_LOWTREASURE3,			"schiebe Gegenstand (reinigen)", 1)
+--Keybinds
+SafeAddString(DUSTMAN_JUNKKEYBIND,					"Aktiviere \"Als Junk (de)markieren\"-Tastenbindung", 1)
+SafeAddString(DUSTMAN_JUNKKEYBIND_DESC,			"Aktiviert Hotkey, um Gegenstände im Inventar schnell als Junk zu markieren oder zu demarkieren", 1)
+SafeAddString(DUSTMAN_DESTROYKEYBIND,				"Aktiviere \"Zerstören\" Tastenbindung", 1)
+SafeAddString(DUSTMAN_DESTROYKEYBIND_DESC,		"Aktiviert Hotkey, um Gegenstände im Inventar zu zerstören", 1)
  --rescan button
 SafeAddString(DUSTMAN_SWEEP,							"Erneut scannen", 1)
 SafeAddString(DUSTMAN_SWEEP_DESC,					"Erneut alle Gegenstände im Inventar mit den eingestellten Filtern überprüfen.", 1)

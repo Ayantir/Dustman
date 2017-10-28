@@ -146,6 +146,11 @@ local strings = {
 	DUSTMAN_ACT_LOWTREASURE1 = "Nothing",
 	DUSTMAN_ACT_LOWTREASURE2 = "Destroy item",
 	DUSTMAN_ACT_LOWTREASURE3 = "Launder item",
+	--Keybinds
+	DUSTMAN_JUNKKEYBIND = "Enable \"(Un)Mark as junk\" keybind",
+	DUSTMAN_JUNKKEYBIND_DESC = "Add a keybind button to quickly (un)junk your items in inventory",
+	DUSTMAN_DESTROYKEYBIND = "Enable \"Destroy\" keybind",
+	DUSTMAN_DESTROYKEYBIND_DESC = "Add a keybind button to quickly destroy your items in inventory",
 	--rescan button
 	DUSTMAN_SWEEP = "Rescan",
 	DUSTMAN_SWEEP_DESC = "Rescan all items in backpack using the filters above.",
@@ -164,7 +169,7 @@ local strings = {
 	DUSTMAN_NOTE_SETITEM = "Item with set bonus: <<t:1>> (<<2>>).",
 	DUSTMAN_NOTE_RARESTYLE = "Item with rare style: <<t:1>> (<<2>>).",
 	DUSTMAN_NOTE_INTERSTING = "Interesting item: <<t:1>>.",
-	--report formats		
+	--report formats
 	DUSTMAN_FORMAT_ZERO = "Dustman sold <<2>>x <<t:1>>.",
 	DUSTMAN_FORMAT_GOLD = "Dustman sold <<2>>x <<t:1>> for <<3>>|t16:16:EsoUI/Art/currency/currency_gold.dds|t.",
 	DUSTMAN_FORMAT_NOTSOLD = "Dustman couldn't sell <<t:1>>.",

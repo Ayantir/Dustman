@@ -152,6 +152,11 @@ SafeAddString(DUSTMAN_SWEEP_DESC,					"Rescanner tous les objets dans l'inventai
 --Clear Marked as Junk
 SafeAddString(DUSTMAN_CLEAR_MARKED,					"Vider entrées manuelles", 1)
 SafeAddString(DUSTMAN_CLEAR_MARKED_DESC,			"Supprimer tous les objets manuellement définis comme rebuts", 1)
+--Keybinds
+SafeAddString(DUSTMAN_JUNKKEYBIND,					"Activer un raccourci \"Mettre aux rebuts\"", 1)
+SafeAddString(DUSTMAN_JUNKKEYBIND_DESC,			"Ajoute un raccourci clavier pour rapidement mettre aux rebuts vos objets", 1)
+SafeAddString(DUSTMAN_DESTROYKEYBIND,				"Activer un raccourci \"Détruire\"", 1)
+SafeAddString(DUSTMAN_DESTROYKEYBIND_DESC,		"Ajoute un raccourci clavier pour rapidement détruire vos objets", 1)
 --import
 SafeAddString(DUSTMAN_IMPORT,							"Importer les paramètres de Dustman à partir de", 1)
 SafeAddString(DUSTMAN_IMPORT_DESC,					"Choisissez à partir de quel personnage les paramètres de Dustman doivent être importés. Veuillez noter que ces paramètres restent basés sur le personnage et ne sont pas synchronisés entre eux", 1)

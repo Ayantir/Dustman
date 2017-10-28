@@ -4,11 +4,15 @@
 			<Action name="DUSTMAN_JUNK">
 				<Down>Dustman_JunkHoveredItem()</Down>
 			</Action>
+			<Action name="DUSTMAN_DESTROY">
+				<Down>Dustman_DestroyHoveredItem()</Down>
+			</Action>
 		</Category>
 	</Layer>
 	<Layer name="GamepadUIMode" allowFallthrough="false">
 		<Category>
 			<AllowAction name="DUSTMAN_JUNK"/>
+			<AllowAction name="DUSTMAN_DESTROY"/>
 		</Category>
 	</Layer>
 </Bindings>
